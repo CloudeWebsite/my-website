@@ -43,7 +43,7 @@ export function Hero({ hero }: { hero: HeroSettings }) {
     let d: Driver | null = null;
     const boot = async () => {
       if (FRAMES > 0) {
-        const seq = new FrameSequence(el, FRAMES);
+        const seq = new FrameSequence(el, FRAMES, window.innerWidth < 768 ? "/frames/mobile" : "/frames");
         d = { setStage: (s) => seq.setStage(s), start: () => seq.start(), stop: () => seq.stop(), resize: (w, h) => seq.resize(w, h), dispose: () => seq.dispose() };
         setMode("frames");
       } else {
@@ -96,14 +96,16 @@ export function Hero({ hero }: { hero: HeroSettings }) {
   // ── headline word masks + intro ──
   useEffect(() => {
     const gsap = registerGsap();
+    const reduced = prefersReducedMotion();
     headlines.current.forEach((h, i) => {
       if (!h) return;
       const words = splitWords(h);
-      gsap.set(words, { yPercent: i === 0 ? 110 : 110 });
+      gsap.set(words, { yPercent: reduced && i === 0 ? 0 : 110 });
     });
+    headlines.current[0]?.parentElement?.classList.add("is-split");
     const first = headlines.current[0];
     const intro = () => {
-      if (!first) return;
+      if (!first || reduced) return;
       gsap.to(first.querySelectorAll(".w-in"), { yPercent: 0, duration: 1.2, stagger: 0.05, ease: "power3.out", delay: 0.15 });
       gsap.from(content.current?.querySelectorAll("[data-hero-in]") ?? [], { opacity: 0, y: 16, duration: 1, stagger: 0.08, delay: 0.5 });
     };
@@ -121,6 +123,11 @@ export function Hero({ hero }: { hero: HeroSettings }) {
     const out = headlines.current[prev]?.querySelectorAll(".w-in");
     const inn = headlines.current[next]?.querySelectorAll(".w-in");
     const down = next > prev;
+    if (prefersReducedMotion()) {
+      if (out) gsap.set(out, { yPercent: 110 });
+      if (inn) gsap.set(inn, { yPercent: 0 });
+      return;
+    }
     if (out) gsap.to(out, { yPercent: down ? -110 : 110, duration: 0.6, stagger: 0.02, ease: "power2.in", overwrite: true });
     if (inn) gsap.fromTo(inn, { yPercent: down ? 110 : -110 }, { yPercent: 0, duration: 0.9, stagger: 0.04, ease: "power3.out", delay: 0.25, overwrite: true });
   };

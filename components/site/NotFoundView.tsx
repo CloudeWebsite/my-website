@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { PlanSvg } from "@/components/hero/PlanSvg";
+import { PlanBackdrop } from "./PlanBackdrop";
 
 export function NotFoundView() {
   return (
     <section className="section nf" data-theme="dark">
       <div className="nf__plan" aria-hidden="true">
-        <PlanSvg palette={{ paper: "transparent", ink: "#F2F0EB", soft: "rgba(242,240,235,0.6)", faint: "rgba(242,240,235,0.08)", accent: "#C98A4B", fill: "rgba(242,240,235,0.08)" }} />
+        <PlanBackdrop palette={{ paper: "transparent", ink: "#F2F0EB", soft: "rgba(242,240,235,0.6)", faint: "rgba(242,240,235,0.08)", accent: "#C98A4B", fill: "rgba(242,240,235,0.08)" }} />
       </div>
       <div className="wrap" style={{ position: "relative" }}>
         <p className="t-mono" style={{ color: "var(--timber)", marginBottom: 24 }}>■ 404 — Sheet missing from set</p>

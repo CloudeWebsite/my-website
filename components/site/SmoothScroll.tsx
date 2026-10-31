@@ -27,7 +27,16 @@ export function SmoothScroll() {
 
   useEffect(() => {
     const id = requestAnimationFrame(() => ScrollTrigger.refresh());
-    return () => cancelAnimationFrame(id);
+    // web fonts and late images shift layout; recompute trigger positions once they settle
+    let alive = true;
+    void document.fonts?.ready.then(() => alive && ScrollTrigger.refresh());
+    const onLoad = () => ScrollTrigger.refresh();
+    window.addEventListener("load", onLoad);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(id);
+      window.removeEventListener("load", onLoad);
+    };
   }, [pathname]);
 
   return null;

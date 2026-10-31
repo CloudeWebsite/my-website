@@ -900,6 +900,10 @@ address {
 .hero__h em {
   font-style: italic;
 }
+/* before hydration only the first headline may show (they share one grid cell) */
+.hero__heads:not(.is-split) .hero__h + .hero__h {
+  visibility: hidden;
+}
 .hero__bodies {
   display: grid;
   max-width: 44ch;
