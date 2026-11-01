@@ -1,0 +1,191 @@
+// Studio database schema.
+// Run `npm run db:migrate` locally, `npm run db:deploy` in production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum ProjectType {
+  RESIDENTIAL
+  RENOVATION
+  INTERIORS
+  LANDSCAPE
+}
+
+enum PublishStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum ImageKind {
+  GALLERY
+  PLAN
+  BEFORE
+  AFTER
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  PROPOSAL
+  WON
+  LOST
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EDITOR)
+  createdAt    DateTime @default(now())
+}
+
+model Project {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  title        String
+  location     String
+  year         Int
+  type         ProjectType
+  status       PublishStatus  @default(DRAFT)
+  featured     Boolean        @default(false)
+  lead         String
+  /// Tiptap / ProseMirror JSON document
+  body         Json
+  coverImageId String?        @unique
+  coverImage   ProjectImage?  @relation("ProjectCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  siteArea     String?
+  floorArea    String?
+  client       String?
+  builder      String?
+  photographer String?
+  order        Int            @default(0)
+  images       ProjectImage[] @relation("ProjectImages")
+  testimonials Testimonial[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([status, order])
+}
+
+model ProjectImage {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation("ProjectImages", fields: [projectId], references: [id], onDelete: Cascade)
+  coverOf   Project?  @relation("ProjectCover")
+  url       String
+  alt       String
+  caption   String?
+  width     Int
+  height    Int
+  order     Int       @default(0)
+  kind      ImageKind @default(GALLERY)
+
+  @@index([projectId, order])
+}
+
+model Service {
+  id           String   @id @default(cuid())
+  title        String
+  subtitle     String
+  description  String
+  deliverables String[]
+  imageUrl     String?
+  order        Int      @default(0)
+}
+
+model TeamMember {
+  id       String  @id @default(cuid())
+  name     String
+  role     String
+  bio      String
+  photoUrl String?
+  order    Int     @default(0)
+}
+
+model Testimonial {
+  id         String   @id @default(cuid())
+  quote      String
+  clientName String
+  projectId  String?
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  approved   Boolean  @default(false)
+  order      Int      @default(0)
+}
+
+model Post {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  excerpt     String
+  /// Tiptap / ProseMirror JSON document
+  body        Json
+  coverUrl    String?
+  category    String
+  publishedAt DateTime?
+  status      PublishStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model Enquiry {
+  id            String        @id @default(cuid())
+  reference     String        @unique
+  projectType   String
+  location      String
+  ownsLand      String
+  budgetRange   String
+  timeline      String
+  description   String
+  name          String
+  email         String
+  phone         String
+  contactMethod String
+  status        EnquiryStatus @default(NEW)
+  notes         String        @default("")
+  files         EnquiryFile[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model EnquiryFile {
+  id        String  @id @default(cuid())
+  enquiryId String
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  /// Storage key (private). Served to admins through /api/admin/files/[id].
+  url       String
+  filename  String
+  size      Int
+  mimeType  String  @default("application/octet-stream")
+}
+
+model Subscriber {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  confirmed   Boolean   @default(false)
+  token       String    @unique
+  confirmedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
